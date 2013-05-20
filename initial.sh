@@ -39,13 +39,16 @@ function set_repos {
 function install_virtualmin {
 
 	echo -e "\nInstalling prerequisities"
-	yum -y --enablerepo=rpmforge install wget mlocate htop yum-plugin-priorities phpMyAdmin
+	yum -y --enablerepo=rpmforge install wget mlocate htop yum-plugin-priorities
 
 	echo -e "\nInstalling Virtualmin GPL"
 	wget -q -O install.sh http://software.virtualmin.com/gpl/scripts/install.sh; sh install.sh -f
 
 	echo -e "\nUpdate from Atomic repository"
 	yum -y --enablerepo=atomic update php mysql
+
+	echo -e "\nAdditional install"
+	yum -y --enablerepo=rpmforge install phpMyAdmin git subversion #
 
 }
 
