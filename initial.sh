@@ -237,7 +237,7 @@ function clean_users {
 
 
 
-function fail2ban_install {
+#function fail2ban_install {
 
 #	echo -e "\nFail2Ban installation"
 #	yum -y --enablerepo=rpmforge install fail2ban
@@ -245,7 +245,7 @@ function fail2ban_install {
 #	chkconfig fail2ban on
 #	service fail2ban start
 
-}
+#}
 
 
 ## Run it ##
