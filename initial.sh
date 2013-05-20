@@ -1,5 +1,11 @@
 #!/bin/bash
 
+function install_prerequisities {
+
+	yum -y install wget mlocate htop git subversion perl yum-plugin-priorities
+
+}
+
 function set_repos {
 
         if [ ! -f /etc/yum.repos.d/rpmforge.repo ]
@@ -38,39 +44,33 @@ function set_repos {
 
 function install_virtualmin {
 
-	echo -e "\nInstalling prerequisities"
-	yum -y --enablerepo=rpmforge install wget mlocate htop yum-plugin-priorities
-
 	echo -e "\nInstalling Virtualmin GPL"
 	wget -q -O install.sh http://software.virtualmin.com/gpl/scripts/install.sh; sh install.sh -f
 
 	echo -e "\nUpdate from Atomic repository"
 	yum -y --enablerepo=atomic update php mysql
 
-	echo -e "\nAdditional install"
-	yum -y --enablerepo=rpmforge install phpMyAdmin git subversion #
-
 }
 
 
 function system_settings {
 
-	echo "\nDisable the key check for interactive mode"
+	echo -e "\nDisable the key check for interactive mode"
 	sed -i 's/^PROMPT.*/PROMPT=no/' /etc/sysconfig/init
 
-	echo "\nLimit number of TTYs"
+	echo -e "\nLimit number of TTYs"
 	sed -i 's/\[1-6\]/\[1\]/' /etc/sysconfig/init
 
-	echo "\nPrompt for password on single-user mode"
+	echo -e "\nPrompt for password on single-user mode"
 	sed -i 's/^SINGLE.*/SINGLE=\/sbin\/sulogin/' /etc/sysconfig/init
 
-	echo "Disable shutdown via Ctrl+Alt+Del"
+	echo -e "\nDisable shutdown via Ctrl+Alt+Del"
 	sed -i 's/^start/#start/' /etc/init/control-alt-delete.conf
 
-	echo "Change default password length requirement"
+	echo -e "\nChange default password length requirement"
 	sed -e 's/pam_cracklib.so/pam_cracklib.so\ minlen=9/' /etc/pam.d/system-auth
 
-	echo "Disconnect idle users after 15 minutes"
+	echo -e "\nDisconnect idle users after 15 minutes"
 	cat > /etc/profile.d/idle-users.sh << EOF
 	readonly TMOUT=900
 	readonly HISTFILE
@@ -132,13 +132,13 @@ function network_settings {
 
 function blacklist_modules {
 
-	echo "\nWireless kernel modules - disabling"
+	echo -e "\nWireless kernel modules - disabling"
 	for WIFI in $(find /lib/modules/`uname -r`/kernel/drivers/net/wireless -name "*.ko" -type f)
 	do
 		echo blacklist ${WIFI} >> /etc/modprobe.d/blacklist-wireless.conf
 	done
 
-	echo "\nSCSI fcoe kernel modules - disabling"
+	echo -e "\nSCSI fcoe kernel modules - disabling"
 	for FCOE in $(find /lib/modules/`uname -r`/kernel/drivers/scsi/fcoe -name "*.ko" -type f)
 	do
 		echo blacklist ${FCOE} >> /etc/modprobe.d/blacklist-fcoe.conf
@@ -158,12 +158,12 @@ function ssh_settings {
 	echo -e "\nDisable Protocol 1"
 	sed -i 's/.*Protocol.*/Protocol\ 2/' /etc/ssh/sshd_config
 
-	echo -e "Use a Non-Standard Port"
+	echo -e "\nUse a Non-Standard Port"
 	PORT=$(echo $((RANDOM%55000+40000))) sed -i "s/#Port.*/Port\ ${PORT}/" /etc/ssh/sshd_config
 	echo
 
-	echo "Network login banner - /etc/issue.net"
-	cat > /etc/issue.net << EOF
+	echo -e "\nNetwork login banner - /etc/issue"
+	cat > /etc/issue << EOF
 
 
 
@@ -184,6 +184,9 @@ EOF
 
 	echo -e "\nEnable network login banner in SSH"
 	sed -i 's/^#Banner.*/Banner \/etc\/issue.net/' /etc/ssh/sshd_config
+
+	sed -i 's/^#AllowAgentForwarding.*/AllowAgentForwarding\ yes/' /etc/ssh/sshd_config
+	sed -i 's/^#AllowTcpForwarding.*/AllowTcpForwarding\ yes/' /etc/ssh/sshd_config
 
 	echo -e "\nServer key bits bigger"
 	sed -i 's/^#ServerKeyBits.*/ServerKeyBits\ 2048/' /etc/ssh/sshd_config
@@ -220,13 +223,13 @@ function set_permissions {
 
 function clean_users {
 
-	echo "\nUser clean-up"
+	echo -e "\nUser clean-up"
 	for USER in	shutdown\
 			halt\
 			games\
 			operator\
 			ftp\
-			gopher\
+			gopher
 	do userdel ${USER}
 	done
 
@@ -247,6 +250,7 @@ function fail2ban_install {
 
 ## Run it ##
 
+install_prerequisities
 
 set_repos
 
