@@ -2,7 +2,7 @@
 
 function install_prerequisities {
 
-	yum -y install wget mlocate htop subversion perl yum-plugin-priorities
+	yum -y install wget mlocate subversion yum-plugin-priorities perl
 
 }
 
@@ -68,7 +68,7 @@ function system_settings {
 	sed -i 's/^start/#start/' /etc/init/control-alt-delete.conf
 
 	echo -e "\nChange default password length requirement"
-	sed -e 's/pam_cracklib.so/pam_cracklib.so\ minlen=9/' /etc/pam.d/system-auth
+	sed -i 's/pam_cracklib.so/pam_cracklib.so\ minlen=9/' /etc/pam.d/system-auth
 
 	echo -e "\nDisconnect idle users after 15 minutes"
 	cat > /etc/profile.d/idle-users.sh << EOF
@@ -159,8 +159,20 @@ function ssh_settings {
 	sed -i 's/.*Protocol.*/Protocol\ 2/' /etc/ssh/sshd_config
 
 	echo -e "\nUse a Non-Standard Port"
-	PORT=$(echo $((RANDOM%55000+40000))) sed -i "s/#Port.*/Port\ ${PORT}/" /etc/ssh/sshd_config
-	echo
+        PORT=$(echo $((RANDOM%55000+40000)))
+        sed -i "s/#Port.*/Port\ ${PORT}/" /etc/ssh/sshd_config
+        
+        echo -e "\nOpen the port ${PORT} in the firewall"
+        sed -i '/dport\ ssh/d' /etc/sysconfig/iptables
+        sed -i "s/dport\ 22/dport\ ${PORT}/" /etc/sysconfig/iptables
+        
+        echo -e "\n#######################################"
+        echo -e "#"
+        echo -e "# To connect to system use following:"
+        echo -e "#"
+        echo -e "#   ssh -p ${PORT} root@$(hostname)"
+        echo -e "#"
+        echo -e "#######################################"
 
 	echo -e "\nNetwork login banner - /etc/issue"
 	cat > /etc/issue << EOF
@@ -183,13 +195,18 @@ function ssh_settings {
 EOF
 
 	echo -e "\nEnable network login banner in SSH"
-	sed -i 's/^#Banner.*/Banner \/etc\/issue.net/' /etc/ssh/sshd_config
+	sed -i 's/^#Banner.*/Banner \/etc\/issue/' /etc/ssh/sshd_config
 
+        echo -e "\nEnable agent forwarding"
 	sed -i 's/^#AllowAgentForwarding.*/AllowAgentForwarding\ yes/' /etc/ssh/sshd_config
+
+        echo -e "\nEnable TCP forwarding"
 	sed -i 's/^#AllowTcpForwarding.*/AllowTcpForwarding\ yes/' /etc/ssh/sshd_config
 
 	echo -e "\nServer key bits bigger"
 	sed -i 's/^#ServerKeyBits.*/ServerKeyBits\ 2048/' /etc/ssh/sshd_config
+	
+	echo -e "\nRemove old server keys\n"
 	rm -vf /etc/ssh/ssh_host*
 
 	echo -e "\nEnable TCPKeepAlive"
@@ -197,17 +214,22 @@ EOF
 
 	echo -e "\nSet ClientAliveInterval"
 	sed -i 's/^#ClientAliveInterval.*/ClientAliveInterval\ 30/' /etc/ssh/sshd_config
+	
+	echo -e "\nPermit tunneling"
+	sed -i 's/^#PermitTunnel.*/PermitTunnel\ yes/' /etc/ssh/sshd_config
 
 	echo -e "\nRestrict max number of retries"
 	sed -i 's/^#MaxAuthTries.*/MaxAuthTries\ 3/' /etc/ssh/sshd_config
 
-	echo -e "\nApply changes"
+	echo -e "\nApply changes\n"
 	service sshd restart
 
 }
 
 
 function set_permissions {
+
+	echo -e "\nSet up important directory and file permissions"
 
 	chmod 700 /root
 	chmod 600 /etc/rsyslog.conf
