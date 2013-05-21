@@ -279,7 +279,7 @@ function post_install {
 	yum -q -y --enablerepo=atomic,epel install php-mcrypt php-pecl-imagick phpMyAdmin
 	
 	if [ ! -f /etc/yum.repos.d/pagespeed.repo ]
-		then echo -e "\nInstallation of mod_pagespeed
+		then echo -e "\nInstallation of mod_pagespeed"
 		rpm --import https://dl-ssl.google.com/linux/linux_signing_key.pub
 		yum -q -y localinstall https://dl-ssl.google.com/dl/linux/direct/mod-pagespeed-stable_current_$(uname -i).rpm
 		else echo -e "\nmod_pagespeed repository already set"
