@@ -2,7 +2,7 @@
 
 function install_prerequisities {
 
-	yum -y install wget mlocate htop git subversion perl yum-plugin-priorities
+	yum -y install wget mlocate htop subversion perl yum-plugin-priorities
 
 }
 
