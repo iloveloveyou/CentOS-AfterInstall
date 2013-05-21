@@ -47,6 +47,11 @@ function install_virtualmin {
 
 	echo -e "\nInstalling Virtualmin GPL"
 	wget -q -O install.sh http://software.virtualmin.com/gpl/scripts/install.sh; sh install.sh -f
+	
+	echo -e "\nInstalling Stress-Free Webmin theme"
+	wget -q -O - https://webmin-theme-stressfree.googlecode.com/files/theme-stressfree-2.10.tar.gz | tar xzf - -C /usr/libexec/webmin
+	echo "theme-stressfree" > /usr/libexec/webmin/defaulttheme
+	sed -i 's/^theme.*/theme=theme-stressfree/' /etc/webmin/config
 
 	echo -e "\nUpdate from Atomic repository"
 	yum -q -y --enablerepo=atomic update php mysql
@@ -272,7 +277,6 @@ function clean_users {
 			halt\
 			games\
 			operator\
-			ftp\
 			gopher
 	do userdel ${USER}
 	done
@@ -294,7 +298,9 @@ function clean_users {
 function post_install {
 
 	echo -e "\nInstalling common packages"
-	yum -q -y --enablerepo=atomic,epel install php-mcrypt php-pecl-imagick phpMyAdmin memcached
+	yum -q -y --enablerepo=atomic,epel install php-mcrypt php-pecl-imagick php-pecl-apc phpMyAdmin memcached
+	chkconfig memcached on
+	
 	
 	if [ ! -f /etc/yum.repos.d/mod-pagespeed.repo ]
 		then echo -e "\nInstallation of mod_pagespeed"
