@@ -302,7 +302,8 @@ function post_install {
 		yum -q -y localinstall https://dl-ssl.google.com/dl/linux/direct/mod-pagespeed-stable_current_$(uname -i).rpm
 		else echo -e "\nmod_pagespeed repository already set"
 	fi
-	
+
+	echo -e "\nUpdating system"
 	yum -q -y update
 
 }
