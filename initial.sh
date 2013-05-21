@@ -3,7 +3,7 @@
 function install_prerequisities {
 
 	echo -e "\nInstalling prerequisities"
-	yum -q -y install wget mlocate subversion yum-plugin-priorities perl at
+	yum -q -y install wget mlocate subversion yum-plugin-priorities perl at git man
 
 }
 
@@ -35,10 +35,10 @@ function set_repos {
         fi
         
         echo -e "\nDisabling added repositories"
-	sed -i 's/^enabled.*$/enabled=0/' /etc/yum.repos.d/atomic*.repo
-	sed -i 's/^enabled.*$/enabled=0/' /etc/yum.repos.d/epel*.repo
-	sed -i 's/^enabled.*$/enabled=0/' /etc/yum.repos.d/rpmforge*.repo
-	sed -i 's/^enabled.*$/enabled=0/' /etc/yum.repos.d/rpmfusion*.repo
+	sed -i "s@^enabled.*$@enabled=0@" /etc/yum.repos.d/atomic*.repo
+	sed -i "s@^enabled.*$@enabled=0@" /etc/yum.repos.d/epel*.repo
+	sed -i "s@^enabled.*$@enabled=0@" /etc/yum.repos.d/rpmforge*.repo
+	sed -i "s@^enabled.*$@enabled=0@" /etc/yum.repos.d/rpmfusion*.repo
 
 }
 
@@ -53,10 +53,7 @@ function install_virtualmin {
 	echo -e "\nInstalling Stress-Free Webmin theme"
 	wget -q -O - https://webmin-theme-stressfree.googlecode.com/files/theme-stressfree-2.10.tar.gz | tar xzf - -C /usr/libexec/webmin
 	echo "theme-stressfree" > /usr/libexec/webmin/defaulttheme
-	sed -i 's/^theme.*/theme=theme-stressfree/' /etc/webmin/config
-
-	echo -e "\nUpdate from Atomic repository"
-	yum -q -y --enablerepo=atomic update php mysql
+	sed -i "s@^theme.*@theme=theme-stressfree@" /etc/webmin/config
 
 }
 
@@ -64,24 +61,24 @@ function install_virtualmin {
 function system_settings {
 
 	echo -e "\nDisable the key check for interactive mode"
-	sed -i 's/^PROMPT.*/PROMPT=no/' /etc/sysconfig/init
+	sed -i "s@^PROMPT.*@PROMPT=no@" /etc/sysconfig/init
 
 	echo -e "\nLimit number of TTYs"
-	sed -i 's/\[1-6\]/\[1\]/' /etc/sysconfig/init
+	sed -i "s@\[1-6\]@\[1\]@" /etc/sysconfig/init
 
 	echo -e "\nPrompt for password on single-user mode"
-	sed -i 's/^SINGLE.*/SINGLE=\/sbin\/sulogin/' /etc/sysconfig/init
+	sed -i "s@^SINGLE.*@SINGLE=/sbin/sulogin@" /etc/sysconfig/init
 
 	echo -e "\nDisable shutdown via Ctrl+Alt+Del"
-	sed -i 's/^start/#start/' /etc/init/control-alt-delete.conf
+	sed -i "s@^start@#start@" /etc/init/control-alt-delete.conf
 
 	echo -e "\nChange default password length requirement"
-	sed -i 's/pam_cracklib.so/pam_cracklib.so\ minlen=9/' /etc/pam.d/system-auth
+	sed -i "s@pam_cracklib.so@pam_cracklib.so minlen=9@" /etc/pam.d/system-auth
 
 	echo -e "\nDisconnect idle users after 15 minutes"
 	cat > /etc/profile.d/idle-users.sh << EOF
-	readonly TMOUT=900
-	readonly HISTFILE
+readonly TMOUT=900
+readonly HISTFILE
 EOF
 
 	chmod +x /etc/profile.d/idle-users.sh
@@ -103,6 +100,8 @@ EOF
 
 
 function network_settings {
+
+	echo -e "\nNetwork settings"
 
 	# Packet forwarding
 	sysctl -w net.ipv4.ip_forward = 0
@@ -158,21 +157,21 @@ function blacklist_modules {
 function ssh_settings {
 
 #	echo -e "\nDisable Root logins"
-#	sed -i 's/^#PermitRootLogin\ yes/PermitRootLogin\ no/' /etc/ssh/sshd_config
+#	sed -i "s@^#PermitRootLogin.*@PermitRootLogin no@" /etc/ssh/sshd_config
 	
 #	echo -e "\nLimit user logins"
-#	sed -i 's/.*AllowUsers.*/AllowUsers\ admin/' /etc/ssh/sshd_config
+#	sed -i "s@.*AllowUsers.*@AllowUsers admin@" /etc/ssh/sshd_config
 
 	echo -e "\nDisable Protocol 1"
-	sed -i 's/.*Protocol.*/Protocol\ 2/' /etc/ssh/sshd_config
+	sed -i "s@.*Protocol.*@Protocol 2@" /etc/ssh/sshd_config
 
 	echo -e "\nUse a Non-Standard Port"
-        PORT=$(echo $((RANDOM%55000+40000)))
-        sed -i "s/#Port.*/Port\ ${PORT}/" /etc/ssh/sshd_config
+        PORT=$(shuf -i 40000-65000 -n 1)
+        sed -i "s@#Port.*@Port ${PORT}@" /etc/ssh/sshd_config
         
         echo -e "\nOpen the port ${PORT} in the firewall"
-        sed -i '/dport\ ssh/d' /etc/sysconfig/iptables
-        sed -i "s/dport\ 22/dport\ ${PORT}/" /etc/sysconfig/iptables
+        sed -i "/dport ssh/d" /etc/sysconfig/iptables
+        sed -i "s@dport 22@dport ${PORT}@" /etc/sysconfig/iptables
         
         echo -e "\nApply IPTables settings"
         service iptables restart
@@ -313,6 +312,9 @@ function post_install {
 
 	echo -e "\nUpdating system"
 	yum -q -y update
+
+	echo -e "\nUpdate from Atomic repository"
+	yum -q -y --enablerepo=atomic update php mysql
 	
 	sed -i "s@.*expose_php =.*@expose_php = Off@" /etc/php.ini
 	
