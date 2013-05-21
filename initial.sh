@@ -272,7 +272,7 @@ function clean_users {
 function update_install {
 
 	echo -e "\nInstalling common packages"
-	yum -q -y --enablerepo=atomic,epel,rpmforge install php-mcrypt php-pecl-imagick php-pecl-apc phpMyAdmin memcached htop
+	yum -q -y --enablerepo=atomic,epel,rpmforge install php-mcrypt php-pecl-imagick php-pecl-apc phpMyAdmin memcached htop optipng
 	
 	chkconfig memcached on
 		
@@ -359,6 +359,7 @@ function php_settings {
 	sed -i "s@.*session.cookie_domain =.*@session.cookie_domain = ${HOSTNAME}@" /etc/php.ini
 
 }
+
 ## Run it ##
 
 install_prerequisities
