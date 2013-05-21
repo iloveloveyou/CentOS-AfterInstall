@@ -3,7 +3,7 @@
 function install_prerequisities {
 
 	echo -e "\nInstalling prerequisities"
-	yum -q -y install wget mlocate subversion yum-plugin-priorities perl
+	yum -q -y install wget mlocate subversion yum-plugin-priorities perl at
 
 }
 
@@ -28,8 +28,8 @@ function set_repos {
                 else echo -e "\nRPMFusion repository already set"
         fi
 
-        if [ ! -f /etc/yum.repos.d/atomic.sh ]
-                then echo -e "\nSetting up  Atomic repository"
+        if [ ! -f /etc/yum.repos.d/atomic.repo ]
+                then echo -e "\nSetting up Atomic repository"
                 wget -q -O - http://www.atomicorp.com/installers/atomic | sh
                 else echo -e "\nAtomic repository already set"
         fi
@@ -277,6 +277,15 @@ function post_install {
 
 	echo -e "\nInstalling common packages"
 	yum -q -y --enablerepo=atomic,epel install php-mcrypt php-pecl-imagick phpMyAdmin
+	
+	if [ ! -f /etc/yum.repos.d/pagespeed.repo ]
+		then echo -e "\nInstallation of mod_pagespeed
+		rpm --import https://dl-ssl.google.com/linux/linux_signing_key.pub
+		yum -q -y localinstall https://dl-ssl.google.com/dl/linux/direct/mod-pagespeed-stable_current_$(uname -i).rpm
+		else echo -e "\nmod_pagespeed repository already set"
+	fi
+	
+	service httpd restart
 
 }
 
