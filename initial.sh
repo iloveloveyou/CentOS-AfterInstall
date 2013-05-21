@@ -170,11 +170,13 @@ function ssh_settings {
         echo -e "\nApply IPTables settings"
         service iptables restart
         
+        IP_ADDR=$(ip a s eth0 | grep 'inet ' | cut -d/ -f1 | awk '{ print $2 }')
+        
         echo -e "\n#######################################"
         echo -e "#"
         echo -e "# To connect to system use following:"
         echo -e "#"
-        echo -e "#   ssh -p ${PORT} root@$(hostname)"
+        echo -e "#   ssh -p ${PORT} root@${IP_ADDR}"
         echo -e "#"
         echo -e "#######################################"
 
@@ -225,8 +227,24 @@ EOF
 	echo -e "\nRestrict max number of retries"
 	sed -i 's/^#MaxAuthTries.*/MaxAuthTries\ 3/' /etc/ssh/sshd_config
 
-	echo -e "\nApply changes\n"
+	echo -e "\nRestarting sshd to apply changes\n"
 	service sshd restart
+
+}
+
+function mysqld_settings {
+
+	echo -e "\nBind MySQL to localhost only"
+
+	BINDLOCAL=$(grep -c bind-address /etc/my.cnf)
+	if [ ${BINDLOCAL} = 0 ]
+		then sed -i '/\[mysqld\]/a \
+bind-address=localhost' /etc/my.cnf
+		else sed -i 's/.*bind-address.*/bind-address=localhost/' /etc/my.cnf
+	fi
+
+	echo -e "\nRestarting mysqld to apply changes\n"
+	service mysqld restart
 
 }
 
@@ -276,16 +294,16 @@ function clean_users {
 function post_install {
 
 	echo -e "\nInstalling common packages"
-	yum -q -y --enablerepo=atomic,epel install php-mcrypt php-pecl-imagick phpMyAdmin
+	yum -q -y --enablerepo=atomic,epel install php-mcrypt php-pecl-imagick phpMyAdmin memcached
 	
-	if [ ! -f /etc/yum.repos.d/pagespeed.repo ]
+	if [ ! -f /etc/yum.repos.d/mod-pagespeed.repo ]
 		then echo -e "\nInstallation of mod_pagespeed"
 		rpm --import https://dl-ssl.google.com/linux/linux_signing_key.pub
 		yum -q -y localinstall https://dl-ssl.google.com/dl/linux/direct/mod-pagespeed-stable_current_$(uname -i).rpm
 		else echo -e "\nmod_pagespeed repository already set"
 	fi
 	
-	service httpd restart
+	yum -q -y update
 
 }
 
@@ -304,8 +322,24 @@ blacklist_modules
 
 ssh_settings
 
+mysqld_settings
+
 set_permissions
 
 clean_users
 
 post_install
+
+
+
+        IP_ADDR=$(ip a s eth0 | grep 'inet ' | cut -d/ -f1 | awk '{ print $2 }')
+        
+        echo -e "\n#######################################"
+        echo -e "#"
+        echo -e "# To connect to system use following:"
+        echo -e "#"
+        echo -e "#   ssh -p ${PORT} root@${IP_ADDR}"
+        echo -e "#"
+        echo -e "#######################################"
+
+
