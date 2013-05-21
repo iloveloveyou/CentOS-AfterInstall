@@ -46,7 +46,9 @@ function set_repos {
 function install_virtualmin {
 
 	echo -e "\nInstalling Virtualmin GPL"
-	wget -q -O install.sh http://software.virtualmin.com/gpl/scripts/install.sh; sh install.sh -f
+	wget -q -O /tmp/install.sh http://software.virtualmin.com/gpl/scripts/install.sh
+	sh /tmp/install.sh -f
+	rm -f /tmp/install.sh
 	
 	echo -e "\nInstalling Stress-Free Webmin theme"
 	wget -q -O - https://webmin-theme-stressfree.googlecode.com/files/theme-stressfree-2.10.tar.gz | tar xzf - -C /usr/libexec/webmin
@@ -311,6 +313,11 @@ function post_install {
 
 	echo -e "\nUpdating system"
 	yum -q -y update
+	
+	sed -i "s@.*expose_php =.*@expose_php = Off@" /etc/php.ini
+	
+	TIMEZONE=$(cat /etc/sysconfig/clock | cut -d\" -f2)
+	sed -i "s@.*date.timezone =.*@date.timezone = ${TIMEZONE}@" /etc/php.ini
 
 }
 
