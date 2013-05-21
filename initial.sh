@@ -75,14 +75,6 @@ function system_settings {
 	echo -e "\nChange default password length requirement"
 	sed -i "s@pam_cracklib.so@pam_cracklib.so minlen=9@" /etc/pam.d/system-auth
 
-	echo -e "\nDisconnect idle users after 15 minutes"
-	cat > /etc/profile.d/idle-users.sh << EOF
-readonly TMOUT=900
-readonly HISTFILE
-EOF
-
-	chmod +x /etc/profile.d/idle-users.sh
-
 	echo -e "\nRestrict 'cron' and 'at' to root only"
 	if [ ! -f /etc/cron.allow ]
 		then touch /etc/cron.allow
@@ -207,50 +199,42 @@ function ssh_settings {
 EOF
 
 	echo -e "\nEnable network login banner in SSH"
-	sed -i 's/^#Banner.*/Banner \/etc\/issue/' /etc/ssh/sshd_config
+	sed -i "s@^#Banner.*@Banner /etc/issue@" /etc/ssh/sshd_config
 
         echo -e "\nEnable agent forwarding"
-	sed -i 's/^#AllowAgentForwarding.*/AllowAgentForwarding\ yes/' /etc/ssh/sshd_config
+	sed -i "s@^#AllowAgentForwarding.*@AllowAgentForwarding yes@" /etc/ssh/sshd_config
 
         echo -e "\nEnable TCP forwarding"
-	sed -i 's/^#AllowTcpForwarding.*/AllowTcpForwarding\ yes/' /etc/ssh/sshd_config
+	sed -i "s@^#AllowTcpForwarding.*@AllowTcpForwarding yes@" /etc/ssh/sshd_config
 
 	echo -e "\nServer key bits bigger"
-	sed -i 's/^#ServerKeyBits.*/ServerKeyBits\ 2048/' /etc/ssh/sshd_config
+	sed -i "s@^#ServerKeyBits.*@ServerKeyBits 2048@" /etc/ssh/sshd_config
 	
 	echo -e "\nRemove old server keys\n"
 	rm -vf /etc/ssh/ssh_host*
 
 	echo -e "\nEnable TCPKeepAlive"
-	sed -i 's/^#TCPKeepAlive.*/TCPKeepAlive\ yes/' /etc/ssh/sshd_config
+	sed -i "s@^#TCPKeepAlive.*@TCPKeepAlive yes@" /etc/ssh/sshd_config
 
 	echo -e "\nSet ClientAliveInterval"
-	sed -i 's/^#ClientAliveInterval.*/ClientAliveInterval\ 30/' /etc/ssh/sshd_config
+	sed -i "s@^#ClientAliveInterval.*@ClientAliveInterval 30@" /etc/ssh/sshd_config
 	
 	echo -e "\nPermit tunneling"
-	sed -i 's/^#PermitTunnel.*/PermitTunnel\ yes/' /etc/ssh/sshd_config
+	sed -i "s@^#PermitTunnel.*@PermitTunnel yes@" /etc/ssh/sshd_config
 
 	echo -e "\nRestrict max number of retries"
-	sed -i 's/^#MaxAuthTries.*/MaxAuthTries\ 3/' /etc/ssh/sshd_config
+	sed -i "s@^#MaxAuthTries.*@MaxAuthTries 3@" /etc/ssh/sshd_config
+
+	echo -e "\nDisconnect idle users after 15 minutes"
+	cat > /etc/profile.d/idle-users.sh << EOF
+readonly TMOUT=900
+readonly HISTFILE
+EOF
+
+	chmod +x /etc/profile.d/idle-users.sh
 
 	echo -e "\nRestarting sshd to apply changes\n"
 	service sshd restart
-
-}
-
-function mysqld_settings {
-
-	echo -e "\nBind MySQL to localhost only"
-
-	BINDLOCAL=$(grep -c bind-address /etc/my.cnf)
-	if [ ${BINDLOCAL} = 0 ]
-		then sed -i '/\[mysqld\]/a \
-bind-address=localhost' /etc/my.cnf
-		else sed -i 's/.*bind-address.*/bind-address=localhost/' /etc/my.cnf
-	fi
-
-	echo -e "\nRestarting mysqld to apply changes\n"
-	service mysqld restart
 
 }
 
@@ -285,24 +269,13 @@ function clean_users {
 }
 
 
-
-#function fail2ban_install {
-
-#	echo -e "\nFail2Ban installation"
-#	yum -y --enablerepo=rpmforge install fail2ban
-#	curl http://bkraft.fr/files/Configurations/fail2ban/jail.conf -o /etc/fail2ban/jail.conf
-#	chkconfig fail2ban on
-#	service fail2ban start
-
-#}
-
-function post_install {
+function update_install {
 
 	echo -e "\nInstalling common packages"
-	yum -q -y --enablerepo=atomic,epel install php-mcrypt php-pecl-imagick php-pecl-apc phpMyAdmin memcached
+	yum -q -y --enablerepo=atomic,epel,rpmforge install php-mcrypt php-pecl-imagick php-pecl-apc phpMyAdmin memcached htop
+	
 	chkconfig memcached on
-	
-	
+		
 	if [ ! -f /etc/yum.repos.d/mod-pagespeed.repo ]
 		then echo -e "\nInstallation of mod_pagespeed"
 		rpm --import https://dl-ssl.google.com/linux/linux_signing_key.pub
@@ -315,15 +288,77 @@ function post_install {
 
 	echo -e "\nUpdate from Atomic repository"
 	yum -q -y --enablerepo=atomic update php mysql
-	
-	sed -i "s@.*expose_php =.*@expose_php = Off@" /etc/php.ini
-	
-	TIMEZONE=$(cat /etc/sysconfig/clock | cut -d\" -f2)
-	sed -i "s@.*date.timezone =.*@date.timezone = ${TIMEZONE}@" /etc/php.ini
 
 }
 
 
+function mysqld_settings {
+
+	echo -e "\nUse the newest configuration file"
+	mv /etc/my.cnf /etc/my.cnf.rpmold
+	mv /etc/my.cnf.rpmnew /etc/my.cnf
+
+	echo -e "\nBind MySQL to localhost only"
+
+	BINDLOCAL=$(grep -c bind-address /etc/my.cnf)
+	if [ ${BINDLOCAL} = 0 ]
+		then sed -i '/\[mysqld\]/a \
+bind-address=localhost' /etc/my.cnf
+		else sed -i "s@.*bind-address.*@bind-address=localhost@" /etc/my.cnf
+	fi
+
+	echo -e "\nRestarting mysqld to apply changes\n"
+	service mysqld restart
+
+}
+
+
+function httpd_settings {
+
+	echo -e "\nSet Server HTTP response header to Prod"
+	sed -i "s@^ServerTokens.*@ServerTokens Prod@" /etc/httpd/conf/httpd.conf
+
+	echo -e "Enable keep-alive connections"
+	sed -i "s@^KeepAlive O.*@KeepAlive On@" /etc/httpd/conf/httpd.conf
+	
+	echo -e "Enable transfer compression"
+	cat > /etc/httpd/conf.d/deflate.conf << EOF
+<IfModule mod_deflate.c>
+	<FilesMatch "\.(js|css|x?html?|htm|php|xml)$">
+        	SetOutputFilter DEFLATE
+	</FilesMatch>
+</IfModule>
+EOF
+
+	echo -e "Enable expire headers"
+	cat > /etc/httpd/conf.d/expires.conf << EOF
+ExpiresActive On
+	<FilesMatch "\.(jpg|jpeg|gif|png|ico|js|css)$">
+        	Header unset Etag
+        	Header set Cache-control "public, max-age=2592000"
+	</FilesMatch>
+EOF
+
+#	echo -e ""
+	
+#	echo -e ""
+
+}
+
+
+function php_settings {
+
+	echo -e "\nDo not expose PHP version"
+	sed -i "s@.*expose_php =.*@expose_php = Off@" /etc/php.ini
+
+	echo -e "\nSet correct timezone"
+	TIMEZONE=$(cat /etc/sysconfig/clock | cut -d\" -f2)
+	sed -i "s@.*date.timezone =.*@date.timezone = ${TIMEZONE}@" /etc/php.ini
+
+	echo -e "\nSet correct cookie domain"
+	sed -i "s@.*session.cookie_domain =.*@session.cookie_domain = ${HOSTNAME}@" /etc/php.ini
+
+}
 ## Run it ##
 
 install_prerequisities
@@ -334,17 +369,23 @@ install_virtualmin
 
 system_settings
 
+network_settings
+
 blacklist_modules
 
 ssh_settings
-
-mysqld_settings
 
 set_permissions
 
 clean_users
 
-post_install
+update_install
+
+mysqld_settings
+
+httpd_settings
+
+php_settings
 
 
 
