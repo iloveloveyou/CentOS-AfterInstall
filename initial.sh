@@ -2,7 +2,8 @@
 
 function install_prerequisities {
 
-	yum -y install wget mlocate subversion yum-plugin-priorities perl
+	echo -e "\nInstalling prerequisities"
+	yum -q -y install wget mlocate subversion yum-plugin-priorities perl
 
 }
 
@@ -10,20 +11,20 @@ function set_repos {
 
         if [ ! -f /etc/yum.repos.d/rpmforge.repo ]
                 then echo -e "\nSetting up RPMForge repository"
-                yum -y localinstall --nogpgcheck http://packages.sw.be/rpmforge-release/rpmforge-release-0.5.3-1.el6.rf.x86_64.rpm
+                yum -q -y localinstall --nogpgcheck http://packages.sw.be/rpmforge-release/rpmforge-release-0.5.3-1.el6.rf.x86_64.rpm
                 else echo -e "\nRPMForge repository already set"
         fi
 
         if [ ! -f /etc/yum.repos.d/epel.repo ]
                 then echo -e "\nSetting up EPEL repository"
-                yum -y localinstall --nogpgcheck http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm
+                yum -q -y localinstall --nogpgcheck http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm
                 else echo -e "\nEPEL repository already set"
         fi
 
         if [ ! -f /etc/yum.repos.d/rpmfusion-free-updates.repo ]
                 then echo -e "\nSetting up RPMFusion repository"
-                yum -y localinstall --nogpgcheck http://download1.rpmfusion.org/free/el/updates/6/i386/rpmfusion-free-release-6-1.noarch.rpm
-                yum -y localinstall --nogpgcheck http://download1.rpmfusion.org/nonfree/el/updates/6/i386/rpmfusion-nonfree-release-6-1.noarch.rpm
+                yum -q -y localinstall --nogpgcheck http://download1.rpmfusion.org/free/el/updates/6/i386/rpmfusion-free-release-6-1.noarch.rpm
+                yum -q -y localinstall --nogpgcheck http://download1.rpmfusion.org/nonfree/el/updates/6/i386/rpmfusion-nonfree-release-6-1.noarch.rpm
                 else echo -e "\nRPMFusion repository already set"
         fi
 
@@ -48,7 +49,7 @@ function install_virtualmin {
 	wget -q -O install.sh http://software.virtualmin.com/gpl/scripts/install.sh; sh install.sh -f
 
 	echo -e "\nUpdate from Atomic repository"
-	yum -y --enablerepo=atomic update php mysql
+	yum -q -y --enablerepo=atomic update php mysql
 
 }
 
@@ -166,6 +167,9 @@ function ssh_settings {
         sed -i '/dport\ ssh/d' /etc/sysconfig/iptables
         sed -i "s/dport\ 22/dport\ ${PORT}/" /etc/sysconfig/iptables
         
+        echo -e "\nApply IPTables settings"
+        service iptables restart
+        
         echo -e "\n#######################################"
         echo -e "#"
         echo -e "# To connect to system use following:"
@@ -269,6 +273,13 @@ function clean_users {
 
 #}
 
+function post_install {
+
+	echo -e "\nInstalling common packages"
+	yum -q -y --enablerepo=atomic,epel install php-mcrypt php-pecl-imagick phpMyAdmin
+
+}
+
 
 ## Run it ##
 
@@ -288,4 +299,4 @@ set_permissions
 
 clean_users
 
-
+post_install
