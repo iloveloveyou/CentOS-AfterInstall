@@ -272,7 +272,7 @@ function clean_users {
 function update_install {
 
 	echo -e "\nInstalling common packages"
-	yum -q -y --enablerepo=atomic,epel,rpmforge install php-mcrypt php-pecl-imagick php-pecl-apc phpMyAdmin memcached htop optipng
+	yum -q -y --enablerepo=atomic,epel,rpmforge install php-mcrypt php-pecl-imagick php-pecl-apc phpMyAdmin memcached htop mytop optipng
 	
 	chkconfig memcached on
 		
