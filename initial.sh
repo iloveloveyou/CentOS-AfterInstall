@@ -1,56 +1,56 @@
 #!/bin/bash
 
-function install_prerequisities {
+install_prerequisities() {
 
-	echo -e "\nInstalling prerequisities"
-	yum -q -y install wget mlocate subversion yum-plugin-priorities perl at git man
+	yum -q -y install wget mlocate subversion perl at git man
 
 }
 
-function set_repos {
+set_repos() {
 
         if [ ! -f /etc/yum.repos.d/rpmforge.repo ]
-                then echo -e "\nSetting up RPMForge repository"
+                then echo -e "RPMForge"
                 yum -q -y localinstall --nogpgcheck http://packages.sw.be/rpmforge-release/rpmforge-release-0.5.3-1.el6.rf.x86_64.rpm
-                else echo -e "\nRPMForge repository already set"
+                else echo -e "RPMForge repository already set"
         fi
 
         if [ ! -f /etc/yum.repos.d/epel.repo ]
-                then echo -e "\nSetting up EPEL repository"
+                then echo -e "EPEL"
                 yum -q -y localinstall --nogpgcheck http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm
-                else echo -e "\nEPEL repository already set"
+                else echo -e "EPEL repository already set"
         fi
 
         if [ ! -f /etc/yum.repos.d/rpmfusion-free-updates.repo ]
-                then echo -e "\nSetting up RPMFusion repository"
+                then echo -e "RPMFusion"
                 yum -q -y localinstall --nogpgcheck http://download1.rpmfusion.org/free/el/updates/6/i386/rpmfusion-free-release-6-1.noarch.rpm
                 yum -q -y localinstall --nogpgcheck http://download1.rpmfusion.org/nonfree/el/updates/6/i386/rpmfusion-nonfree-release-6-1.noarch.rpm
-                else echo -e "\nRPMFusion repository already set"
+                else echo -e "RPMFusion repository already set"
         fi
 
         if [ ! -f /etc/yum.repos.d/atomic.repo ]
-                then echo -e "\nSetting up Atomic repository"
+                then echo -e "Atomic"
                 wget -q -O - http://www.atomicorp.com/installers/atomic | sh
-                else echo -e "\nAtomic repository already set"
+                else echo -e "Atomic repository already set"
         fi
         
-        echo -e "\nDisabling added repositories"
-	sed -i "s@^enabled.*$@enabled=0@" /etc/yum.repos.d/atomic*.repo
-	sed -i "s@^enabled.*$@enabled=0@" /etc/yum.repos.d/epel*.repo
-	sed -i "s@^enabled.*$@enabled=0@" /etc/yum.repos.d/rpmforge*.repo
-	sed -i "s@^enabled.*$@enabled=0@" /etc/yum.repos.d/rpmfusion*.repo
+        echo -e "Disabling added repositories"
+	sed -i "s@^enabled.*@enabled=0@" /etc/yum.repos.d/atomic*.repo
+	sed -i "s@^enabled.*@enabled=0@" /etc/yum.repos.d/epel*.repo
+	sed -i "s@^enabled.*@enabled=0@" /etc/yum.repos.d/rpmforge*.repo
+	sed -i "s@^enabled.*@enabled=0@" /etc/yum.repos.d/rpmfusion*.repo
+
+	echo -e "Done."
 
 }
 
 
-function install_virtualmin {
+install_virtualmin() {
 
-	echo -e "\nInstalling Virtualmin GPL"
 	wget -q -O /tmp/install.sh http://software.virtualmin.com/gpl/scripts/install.sh
 	sh /tmp/install.sh -f
 	rm -f /tmp/install.sh
 	
-	echo -e "\nInstalling Stress-Free Webmin theme"
+	echo -e "Installing Stress-Free Webmin theme"
 	wget -q -O - https://webmin-theme-stressfree.googlecode.com/files/theme-stressfree-2.10.tar.gz | tar xzf - -C /usr/libexec/webmin
 	echo "theme-stressfree" > /usr/libexec/webmin/defaulttheme
 	sed -i "s@^theme.*@theme=theme-stressfree@" /etc/webmin/config
@@ -58,24 +58,67 @@ function install_virtualmin {
 }
 
 
-function system_settings {
+update_install() {
 
-	echo -e "\nDisable the key check for interactive mode"
+	echo -e "Install common packages"
+	yum -q -y --enablerepo=atomic,epel,rpmforge install php-mcrypt php-pecl-imagick php-pecl-apc php-pecl-memcache phpMyAdmin memcached htop mytop optipng
+
+	echo -e "Enable memcached to start on boot"
+	chkconfig memcached on
+	
+	if [ ! -f /etc/yum.repos.d/mod-pagespeed.repo ]
+		then echo -e "\nInstall of mod_pagespeed"
+		rpm --import https://dl-ssl.google.com/linux/linux_signing_key.pub
+		yum -q -y localinstall https://dl-ssl.google.com/dl/linux/direct/mod-pagespeed-stable_current_$(uname -i).rpm
+		else echo -e "\nmod_pagespeed repository already set"
+	fi
+
+	echo -e "Updating system"
+	yum -q -y update
+
+	echo -e "Update PHP and MySQL from Atomic repository"
+	yum -q -y --enablerepo=atomic update php mysql
+
+}
+
+
+system_settings() {
+
+#################################################
+##                                             ##
+##  These settings are taken from CentOS wiki: ##
+##                                             ##
+## http://wiki.centos.org/HowTos/OS_Protection ##
+##                                             ##
+#################################################
+
+	##########################
+	# Basic System behaviour #
+	##########################
+	
+	echo -e "Disable the key check for interactive mode"
 	sed -i "s@^PROMPT.*@PROMPT=no@" /etc/sysconfig/init
 
-	echo -e "\nLimit number of TTYs"
+	echo -e "Limit number of TTYs"
 	sed -i "s@\[1-6\]@\[1\]@" /etc/sysconfig/init
 
-	echo -e "\nPrompt for password on single-user mode"
+	echo -e "Prompt for password on single-user mode"
 	sed -i "s@^SINGLE.*@SINGLE=/sbin/sulogin@" /etc/sysconfig/init
 
-	echo -e "\nDisable shutdown via Ctrl+Alt+Del"
+	echo -e "Disable shutdown via Ctrl+Alt+Del"
 	sed -i "s@^start@#start@" /etc/init/control-alt-delete.conf
 
-	echo -e "\nChange default password length requirement"
-	sed -i "s@pam_cracklib.so@pam_cracklib.so minlen=9@" /etc/pam.d/system-auth
+	echo -e "Change default password length requirement"
+	sed -i "s@pam_cracklib.so try@pam_cracklib.so minlen=9 try@" /etc/pam.d/system-auth
 
-	echo -e "\nRestrict 'cron' and 'at' to root only"
+	echo -e "Use sha512 instead of md5 for password protection"
+	authconfig --passalgo=sha512 --update
+
+	########################
+	# Restrict cron and at #
+	########################
+
+	echo -e "Restrict 'cron' and 'at' to root only"
 	if [ ! -f /etc/cron.allow ]
 		then touch /etc/cron.allow
 	fi
@@ -88,13 +131,60 @@ function system_settings {
 	chmod 600 /etc/at.allow
 	awk -F: '{ print $1 }' /etc/passwd | grep -v root > /etc/at.deny
 
-}
+	##################################
+	# Directory and file permissions #
+	##################################
 
+	echo -e "Set up important directory and file permissions"
+	chmod 700 /root
+	chmod 600 /etc/rsyslog.conf
+	chmod 640 /etc/security/access.conf
+	chmod 600 /etc/sysctl.conf
+	chmod -R 700 /etc/skel
+	chmod 740 /etc/rc.d/init.d/iptables
+	chmod 740 /sbin/iptables
+	chmod 700 /var/log/audit
 
-function network_settings {
+	################
+	# Delete users #
+	################
 
-	echo -e "\nNetwork settings"
+	echo -e "User clean-up"
+	for USER in	shutdown\
+			halt\
+			games\
+			operator\
+			gopher
+	do userdel ${USER}
+	done
 
+	############################
+	# Blacklist kernel modules #
+	############################
+
+	echo -e "Blacklisting SCSI fcoe kernel modules"
+	for FCOE in $(find /lib/modules/`uname -r`/kernel/drivers/scsi/fcoe -name "*.ko" -type f)
+	do
+		echo blacklist ${FCOE} >> /etc/modprobe.d/blacklist-fcoe.conf
+	done
+
+	echo -e "Blacklisting USB Mass Storage modules"
+	for USBS in $(find /lib/modules/`uname -r`/kernel/drivers/usb/storage -name "*.ko" -type f)
+	do
+		echo blacklist ${USBS} >> /etc/modprobe.d/blacklist-usbstorage.conf
+	done
+
+	echo -e "Blacklisting Wireless kernel modules"
+	for WIFI in $(find /lib/modules/$(uname -r)/kernel/drivers/net/wireless -name "*.ko" -type f)
+	do
+		echo blacklist ${WIFI} >> /etc/modprobe.d/blacklist-wireless.conf
+	done
+
+	###########################
+	# Sysctl network security #
+	###########################
+
+	echo -e "Hardening Sysctl network settings"
 	# Packet forwarding
 	sysctl -w net.ipv4.ip_forward = 0
 	# ICMP redirects
@@ -122,31 +212,38 @@ function network_settings {
 	sysctl -w net.ipv4.conf.default.rp_filter = 1
 	# No timestamps
 	sysctl -w net.ipv4.tcp_timestamps = 0
-	
+
+	##########################
+	# TCP wrapper - SSH only #
+	##########################
+
+	echo -e "Permit SSH only using TCP wrapper"
 	echo "ALL:ALL" >> /etc/hosts.deny
 	echo "sshd:ALL" >> /etc/hosts.allow
 
-}
+	##########################################
+	# Disconnect idle users after 15 minutes #
+	##########################################
 
-
-function blacklist_modules {
-
-	echo -e "\nWireless kernel modules - disabling"
-	for WIFI in $(find /lib/modules/`uname -r`/kernel/drivers/net/wireless -name "*.ko" -type f)
-	do
-		echo blacklist ${WIFI} >> /etc/modprobe.d/blacklist-wireless.conf
-	done
-
-	echo -e "\nSCSI fcoe kernel modules - disabling"
-	for FCOE in $(find /lib/modules/`uname -r`/kernel/drivers/scsi/fcoe -name "*.ko" -type f)
-	do
-		echo blacklist ${FCOE} >> /etc/modprobe.d/blacklist-fcoe.conf
-	done
+	echo -e "\nDisconnect idle users after 15 minutes"
+	cat > /etc/profile.d/idle-users.sh << EOF
+readonly TMOUT=900
+readonly HISTFILE
+EOF
+	chmod +x /etc/profile.d/idle-users.sh
 
 }
 
 
-function ssh_settings {
+ssh_settings() {
+
+#######################################################
+##                                                   ##
+##     These settings are taken from CentOS wiki:    ##
+##                                                   ##
+## http://wiki.centos.org/HowTos/Network/SecuringSSH ##
+##                                                   ##
+#######################################################
 
 #	echo -e "\nDisable Root logins"
 #	sed -i "s@^#PermitRootLogin.*@PermitRootLogin no@" /etc/ssh/sshd_config
@@ -154,31 +251,24 @@ function ssh_settings {
 #	echo -e "\nLimit user logins"
 #	sed -i "s@.*AllowUsers.*@AllowUsers admin@" /etc/ssh/sshd_config
 
-	echo -e "\nDisable Protocol 1"
+	echo -e "Disable Protocol 1"
 	sed -i "s@.*Protocol.*@Protocol 2@" /etc/ssh/sshd_config
 
-	echo -e "\nUse a Non-Standard Port"
-        PORT=$(shuf -i 40000-65000 -n 1)
-        sed -i "s@#Port.*@Port ${PORT}@" /etc/ssh/sshd_config
-        
-        echo -e "\nOpen the port ${PORT} in the firewall"
-        sed -i "/dport ssh/d" /etc/sysconfig/iptables
-        sed -i "s@dport 22@dport ${PORT}@" /etc/sysconfig/iptables
-        
-        echo -e "\nApply IPTables settings"
-        service iptables restart
-        
-        IP_ADDR=$(ip a s eth0 | grep 'inet ' | cut -d/ -f1 | awk '{ print $2 }')
-        
-        echo -e "\n#######################################"
-        echo -e "#"
-        echo -e "# To connect to system use following:"
-        echo -e "#"
-        echo -e "#   ssh -p ${PORT} root@${IP_ADDR}"
-        echo -e "#"
-        echo -e "#######################################"
+	echo -e "Use a Non-Standard Port"
+	PORT=$(shuf -i 40000-65000 -n 1)
+	sed -i "s@#Port.*@Port ${PORT}@" /etc/ssh/sshd_config
 
-	echo -e "\nNetwork login banner - /etc/issue"
+	echo -e "Open port ${PORT} in the firewall"
+	sed -i "/dport ssh/d" /etc/sysconfig/iptables
+	sed -i "s@dport 22@dport ${PORT}@" /etc/sysconfig/iptables
+
+	echo -e "Apply IPTables settings"
+	service iptables restart
+
+#	echo -e "Disable password authentication forcing use of keys"
+#	sed -i "s@.*PasswordAuthentication yes.*@PasswordAuthentication no@" /etc/ssh/sshd_config
+
+	echo -e "Create network login banner - /etc/issue"
 	cat > /etc/issue << EOF
 
 
@@ -186,120 +276,71 @@ function ssh_settings {
         STOP:
 
            ACCESS TO THIS COMPUTER IS PROHIBITED UNLESS AUTHORIZED.
-        USE OF THIS COMPUTER SYSTEM  CONSTITUTES CONSENT  TO MONITORING
-        OF THIS SYSTEM.  EVIDENCE OF  UNAUTHORIZED USE COLLECTED DURING
-        MONITORING MAY BE USED FOR  ADMINISTRATIVE,  CRIMINAL, OR OTHER
+        USE OF THIS COMPUTER SYSTEM  CONSTITUTES CONSENT TO MONITORING
+        OF THIS SYSTEM.  EVIDENCE OF UNAUTHORIZED USE COLLECTED DURING
+        MONITORING MAY BE USED FOR  ADMINISTRATIVE, CRIMINAL, OR OTHER
         ADVERSE ACTION.
-        IF YOU ARE NOT AUTHORIZED, DISCONNECT NOW. ACCESS FOR ANY OTHER
-        REASON IS  AN ILLEGAL  ACT AND  MAY BE  SUBJECT TO  CIVIL RIGHT
+        IF YOU ARE NOT AUTHORIZED DISCONNECT NOW. ACCESS FOR ANY OTHER
+        REASON IS  AN ILLEGAL  ACT AND  MAY BE SUBJECT TO  CIVIL RIGHT
         ACTIONS!
 
 
 
 EOF
 
-	echo -e "\nEnable network login banner in SSH"
+	echo -e "Enable network login banner in SSH"
 	sed -i "s@^#Banner.*@Banner /etc/issue@" /etc/ssh/sshd_config
 
-        echo -e "\nEnable agent forwarding"
+	echo -e "Enable agent forwarding"
 	sed -i "s@^#AllowAgentForwarding.*@AllowAgentForwarding yes@" /etc/ssh/sshd_config
 
-        echo -e "\nEnable TCP forwarding"
+	echo -e "Enable TCP forwarding"
 	sed -i "s@^#AllowTcpForwarding.*@AllowTcpForwarding yes@" /etc/ssh/sshd_config
 
-	echo -e "\nServer key bits bigger"
+	echo -e "Server key bits bigger"
 	sed -i "s@^#ServerKeyBits.*@ServerKeyBits 2048@" /etc/ssh/sshd_config
 	
-	echo -e "\nRemove old server keys\n"
+	echo -e "Remove old server keys\n"
 	rm -vf /etc/ssh/ssh_host*
 
-	echo -e "\nEnable TCPKeepAlive"
+	echo -e "Enable TCPKeepAlive"
 	sed -i "s@^#TCPKeepAlive.*@TCPKeepAlive yes@" /etc/ssh/sshd_config
 
-	echo -e "\nSet ClientAliveInterval"
+	echo -e "Set ClientAliveInterval"
 	sed -i "s@^#ClientAliveInterval.*@ClientAliveInterval 30@" /etc/ssh/sshd_config
-	
-	echo -e "\nPermit tunneling"
+
+	echo -e "Permit tunneling"
 	sed -i "s@^#PermitTunnel.*@PermitTunnel yes@" /etc/ssh/sshd_config
 
-	echo -e "\nRestrict max number of retries"
+	echo -e "Restrict max number of retries"
 	sed -i "s@^#MaxAuthTries.*@MaxAuthTries 3@" /etc/ssh/sshd_config
 
-	echo -e "\nDisconnect idle users after 15 minutes"
-	cat > /etc/profile.d/idle-users.sh << EOF
-readonly TMOUT=900
-readonly HISTFILE
-EOF
-
-	chmod +x /etc/profile.d/idle-users.sh
-
-	echo -e "\nRestarting sshd to apply changes\n"
+	echo -e "Restart sshd to apply changes\n"
 	service sshd restart
 
-}
+	################################
+	# Print connection information #
+	################################
 
-
-function set_permissions {
-
-	echo -e "\nSet up important directory and file permissions"
-
-	chmod 700 /root
-	chmod 600 /etc/rsyslog.conf
-	chmod 640 /etc/security/access.conf
-	chmod 600 /etc/sysctl.conf
-	chmod -R 700 /etc/skel
-	chmod 740 /etc/rc.d/init.d/iptables
-	chmod 740 /sbin/iptables
-	chmod 700 /var/log/audit
+	IP_ADDR=$(ip a s eth0 | grep 'inet ' | cut -d/ -f1 | awk '{ print $2 }')
+	echo -e "\n#######################################"
+	echo -e "#"
+	echo -e "# To connect to system use following:"
+	echo -e "#"
+	echo -e "#   ssh -p ${PORT} root@${IP_ADDR}"
+	echo -e "#"
+	echo -e "#######################################"
 
 }
 
 
-function clean_users {
+mysql_settings() {
 
-	echo -e "\nUser clean-up"
-	for USER in	shutdown\
-			halt\
-			games\
-			operator\
-			gopher
-	do userdel ${USER}
-	done
-
-}
-
-
-function update_install {
-
-	echo -e "\nInstalling common packages"
-	yum -q -y --enablerepo=atomic,epel,rpmforge install php-mcrypt php-pecl-imagick php-pecl-apc phpMyAdmin memcached htop mytop optipng
-	
-	chkconfig memcached on
-		
-	if [ ! -f /etc/yum.repos.d/mod-pagespeed.repo ]
-		then echo -e "\nInstallation of mod_pagespeed"
-		rpm --import https://dl-ssl.google.com/linux/linux_signing_key.pub
-		yum -q -y localinstall https://dl-ssl.google.com/dl/linux/direct/mod-pagespeed-stable_current_$(uname -i).rpm
-		else echo -e "\nmod_pagespeed repository already set"
-	fi
-
-	echo -e "\nUpdating system"
-	yum -q -y update
-
-	echo -e "\nUpdate from Atomic repository"
-	yum -q -y --enablerepo=atomic update php mysql
-
-}
-
-
-function mysqld_settings {
-
-	echo -e "\nUse the newest configuration file"
+	echo -e "Use the newest configuration file"
 	mv /etc/my.cnf /etc/my.cnf.rpmold
 	mv /etc/my.cnf.rpmnew /etc/my.cnf
 
-	echo -e "\nBind MySQL to localhost only"
-
+	echo -e "Bind MySQL to localhost only"
 	BINDLOCAL=$(grep -c bind-address /etc/my.cnf)
 	if [ ${BINDLOCAL} = 0 ]
 		then sed -i '/\[mysqld\]/a \
@@ -307,15 +348,15 @@ bind-address=localhost' /etc/my.cnf
 		else sed -i "s@.*bind-address.*@bind-address=localhost@" /etc/my.cnf
 	fi
 
-	echo -e "\nRestarting mysqld to apply changes\n"
+	echo -e "Restart mysqld to apply changes"
 	service mysqld restart
 
 }
 
 
-function httpd_settings {
+apache_settings() {
 
-	echo -e "\nSet Server HTTP response header to Prod"
+	echo -e "Set Server HTTP response header to Prod"
 	sed -i "s@^ServerTokens.*@ServerTokens Prod@" /etc/httpd/conf/httpd.conf
 
 	echo -e "Enable keep-alive connections"
@@ -334,8 +375,8 @@ EOF
 	cat > /etc/httpd/conf.d/expires.conf << EOF
 ExpiresActive On
 	<FilesMatch "\.(jpg|jpeg|gif|png|ico|js|css)$">
-        	Header unset Etag
-        	Header set Cache-control "public, max-age=2592000"
+		Header unset Etag
+		Header set Cache-control "public, max-age=2592000"
 	</FilesMatch>
 EOF
 
@@ -346,58 +387,92 @@ EOF
 }
 
 
-function php_settings {
+php_settings() {
 
-	echo -e "\nDo not expose PHP version"
+	echo -e "Do not expose PHP version"
 	sed -i "s@.*expose_php =.*@expose_php = Off@" /etc/php.ini
 
-	echo -e "\nSet correct timezone"
+	echo -e "Set correct timezone"
 	TIMEZONE=$(cat /etc/sysconfig/clock | cut -d\" -f2)
 	sed -i "s@.*date.timezone =.*@date.timezone = ${TIMEZONE}@" /etc/php.ini
 
-	echo -e "\nSet correct cookie domain"
+	echo -e "Set correct cookie domain"
 	sed -i "s@.*session.cookie_domain =.*@session.cookie_domain = ${HOSTNAME}@" /etc/php.ini
+
+}
+
+print_usage() {
+
+echo "Usage: $0 [-IRVUOSMAP]"
+echo "       -I    Install prerequisities"
+echo "       -R    Set up repositories"
+echo "       -V    Install Virtualmin GPL"
+echo "       -U    Update system and instal additional packages"
+echo "       -O    Harden Operating System settings"
+echo "       -S    Secure OpenSSH server settings"
+echo "       -M    Tweak MySQL server settings"
+echo "       -A    Tweak Apache server settings"
+echo "       -P    Tweak PHP settings"
+exit 1
 
 }
 
 ## Run it ##
 
-install_prerequisities
+if [ $# -eq 0 ]
+	then print_usage
+fi
 
-set_repos
-
-install_virtualmin
-
-system_settings
-
-network_settings
-
-blacklist_modules
-
-ssh_settings
-
-set_permissions
-
-clean_users
-
-update_install
-
-mysqld_settings
-
-httpd_settings
-
-php_settings
-
-
-
-        IP_ADDR=$(ip a s eth0 | grep 'inet ' | cut -d/ -f1 | awk '{ print $2 }')
-        
-        echo -e "\n#######################################"
-        echo -e "#"
-        echo -e "# To connect to system use following:"
-        echo -e "#"
-        echo -e "#   ssh -p ${PORT} root@${IP_ADDR}"
-        echo -e "#"
-        echo -e "#######################################"
-
+while getopts "IRVUOSMAP" optname
+do
+	case "$optname" in
+		"I")
+			echo -e "\nInstalling prerequisities"
+			install_prerequisities
+			;;
+		"R")
+			echo -e "\nSetting up repositories"
+			set_repos
+			;;
+		"V")
+			echo -e "\nInstalling Virtualmin GPL"
+			install_virtualmin
+			;;
+		"U")
+			echo -e "\nUpdate system and install additional packages"
+			update_install
+			;;
+		"O")
+			echo -e "\nHardening Operating system settings"
+			system_settings
+			;;
+		"S")
+			echo -e "\nSecuring OpenSSH server settings"
+			ssh_settings
+			;;
+		"M")
+			echo -e "\nMySQL server settings"
+			mysql_settings
+			;;
+		"A")
+			echo -e "\nApache server settings"
+			apache_settings
+			;;
+		"P")
+			echo -e "\nPHP settings"
+			php_settings
+			;;
+		"?")
+			echo -e "\nInvalid option: -$OPTARG"
+			print_usage
+			;;
+#		":")
+#			echo "No argument value for option $OPTARG"
+#			;;
+#		*)
+# Should not occur
+#			echo "Unknown error while processing options"
+#			;;
+	esac
+done
 
