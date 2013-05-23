@@ -403,16 +403,27 @@ php_settings() {
 
 print_usage() {
 
-echo "Usage: $0 [-IRVUOSMAP]"
-echo "       -I    Install prerequisities"
-echo "       -R    Set up repositories"
-echo "       -V    Install Virtualmin GPL"
-echo "       -U    Update system and instal additional packages"
-echo "       -O    Harden Operating System settings"
-echo "       -S    Secure OpenSSH server settings"
-echo "       -M    Tweak MySQL server settings"
-echo "       -A    Tweak Apache server settings"
-echo "       -P    Tweak PHP settings"
+cat << EOF
+
+Usage: $0 [-IRVUOSMAP]
+
+This script performs initial setting of the system and common services
+after fresh install of CentOS minimal Linux distribution.
+
+OPTIONS:
+
+  -I   Install prerequisities
+  -R   Set up repositories
+  -V   Install Virtualmin GPL
+  -U   Update system and instal additional packages
+  -O   Harden Operating System settings
+  -S   Secure OpenSSH server settings
+  -M   Tweak MySQL server settings
+  -A   Tweak Apache server settings
+  -P   Tweak PHP settings
+  
+EOF
+
 exit 1
 
 }
@@ -423,9 +434,11 @@ if [ $# -eq 0 ]
 	then print_usage
 fi
 
-while getopts "IRVUOSMAP" optname
+OPTIONS="IRVUOSMAP"
+
+while getopts ${OPTIONS} optname
 do
-	case "$optname" in
+	case "${optname}" in
 		"I")
 			echo -e "\nInstalling prerequisities"
 			install_prerequisities
@@ -463,7 +476,6 @@ do
 			php_settings
 			;;
 		"?")
-			echo -e "\nInvalid option: -$OPTARG"
 			print_usage
 			;;
 #		":")
