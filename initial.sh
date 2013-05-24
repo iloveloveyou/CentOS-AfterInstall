@@ -63,9 +63,9 @@ install_virtualmin() {
 	echo "theme-stressfree" > /usr/libexec/webmin/defaulttheme
 	sed -i "s@^theme.*@theme=theme-stressfree@" /etc/webmin/config
 
-	#######################################################
-	# Instruc to perform initial set up of Virtualmin GPL #
-	#######################################################
+	########################################################
+	# Instruct to perform initial set up of Virtualmin GPL #
+	########################################################
 
 	IP_ADDR=$(ip a s eth0 | grep 'inet ' | cut -d/ -f1 | awk '{ print $2 }')
 	echo -e "\n########################################"
@@ -90,7 +90,7 @@ install_virtualmin() {
 update_install() {
 
 	echo -e "Install common packages"
-	yum -q -y --enablerepo=atomic,epel,rpmforge install php-mcrypt php-pecl-imagick php-pecl-apc php-pecl-memcache phpMyAdmin memcached htop mytop optipng
+	yum --enablerepo=atomic,epel,rpmforge install php-mcrypt php-pecl-imagick php-pecl-apc php-pecl-memcache phpMyAdmin memcached htop mytop optipng
 
 	echo -e "Enable memcached to start on boot"
 	chkconfig memcached on
@@ -103,10 +103,10 @@ update_install() {
 	fi
 
 	echo -e "Updating system"
-	yum -q -y update
+	yum update
 
 	echo -e "Update PHP and MySQL from Atomic repository"
-	yum -q -y --enablerepo=atomic update php mysql
+	yum --enablerepo=atomic update php mysql
 
 }
 
