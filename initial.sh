@@ -6,8 +6,8 @@ install_prerequisities() {
 	read -p "Are you sure you want to remove them? Y/N:" -n 1 -r
 	if [[ $REPLY =~ ^[Yy]$ ]]
 	then
-		yum -q -y groupremove "E-mail server" "Graphical Administration Tools" "Perl Support" "Network file system client" "Web Server" "PHP Support" "MySQL Database server"
-		yum -q -y remove epel-release rpmforge-release
+		yum -q -y groupremove "E-mail server" "Graphical Administration Tools" "Perl Support" "Network file system client" "Web Server" "PHP Support" "PostgreSQL Database server" "MySQL Database server"
+		yum -q -y remove epel-release rpmforge-release webmin
 	fi
 	
 	yum -q -y install wget mlocate subversion perl at git man
@@ -62,6 +62,27 @@ install_virtualmin() {
 	wget -q -O - https://webmin-theme-stressfree.googlecode.com/files/theme-stressfree-2.10.tar.gz | tar xzf - -C /usr/libexec/webmin
 	echo "theme-stressfree" > /usr/libexec/webmin/defaulttheme
 	sed -i "s@^theme.*@theme=theme-stressfree@" /etc/webmin/config
+
+	#######################################################
+	# Instruc to perform initial set up of Virtualmin GPL #
+	#######################################################
+
+	IP_ADDR=$(ip a s eth0 | grep 'inet ' | cut -d/ -f1 | awk '{ print $2 }')
+	echo -e "\n########################################"
+	echo -e "#"
+	echo -e "#             IMPORTANT!!!"
+	echo -e "#"
+	echo -e "# Please navigate to following address"
+	echo -e "#  in your browser and perform initial"
+	echo -e "#   set up of Virtualmin GPL:"
+	echo -e "#"
+	echo -e "#   https://${HOSTNAME}:10000/"
+	echo -e "#"
+	echo -e "#               or"
+	echo -e "#"
+	echo -e "#   https://${IP_ADDR}:10000/"
+	echo -e "#"
+	echo -e "#######################################"
 
 }
 
@@ -330,7 +351,6 @@ EOF
 	# Print connection information #
 	################################
 
-	IP_ADDR=$(ip a s eth0 | grep 'inet ' | cut -d/ -f1 | awk '{ print $2 }')
 	echo -e "\n#######################################"
 	echo -e "#"
 	echo -e "# To connect to system use following:"
