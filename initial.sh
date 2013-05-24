@@ -445,6 +445,9 @@ php_settings() {
 	echo -e "Set correct cookie domain"
 	sed -i "s@.*session.cookie_domain =.*@session.cookie_domain = ${HOSTNAME}@" /etc/php.ini
 
+	echo -e "Apply new settings"
+	service httpd restart
+
 }
 
 print_usage() {
