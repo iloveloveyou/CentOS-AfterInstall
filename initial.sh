@@ -7,7 +7,7 @@ install_prerequisities() {
 	if [[ $REPLY =~ ^[Yy]$ ]]
 	then
 		yum groupremove "E-mail server" "Graphical Administration Tools" "Perl Support" "Network file system client" "Web Server" "PHP Support" "PostgreSQL Database server" "MySQL Database server"
-		yum remove epel* rpmforge* webmin* virtualmin* php* perl* mysql* postgre*
+		yum remove epel* rpmforge* webmin* virtualmin* php* perl* mysql* postgre* http*
 	fi
 	
 	yum install wget mlocate subversion perl at git man
@@ -63,12 +63,12 @@ install_virtualmin() {
 	echo "theme-stressfree" > /usr/libexec/webmin/defaulttheme
 	sed -i "s@^theme.*@theme=theme-stressfree@" /etc/webmin/config
 
-	#######################################################
-	# Instruc to perform initial set up of Virtualmin GPL #
-	#######################################################
+	########################################################
+	# Instruct to perform initial set up of Virtualmin GPL #
+	########################################################
 
 	IP_ADDR=$(ip a s eth0 | grep 'inet ' | cut -d/ -f1 | awk '{ print $2 }')
-	echo -e "\n########################################"
+	echo -e "\n#########################################"
 	echo -e "#"
 	echo -e "#             IMPORTANT!!!"
 	echo -e "#"
@@ -82,7 +82,7 @@ install_virtualmin() {
 	echo -e "#"
 	echo -e "#   https://${IP_ADDR}:10000/"
 	echo -e "#"
-	echo -e "#######################################"
+	echo -e "#########################################"
 
 }
 
@@ -90,7 +90,7 @@ install_virtualmin() {
 update_install() {
 
 	echo -e "Install common packages"
-	yum -q -y --enablerepo=atomic,epel,rpmforge install php-mcrypt php-pecl-imagick php-pecl-apc php-pecl-memcache phpMyAdmin memcached htop mytop optipng
+	yum --enablerepo=atomic,epel,rpmforge install php-mcrypt php-pecl-imagick php-pecl-apc php-pecl-memcache phpMyAdmin memcached htop mytop optipng
 
 	echo -e "Enable memcached to start on boot"
 	chkconfig memcached on
@@ -103,10 +103,10 @@ update_install() {
 	fi
 
 	echo -e "Updating system"
-	yum -q -y update
+	yum update
 
 	echo -e "Update PHP and MySQL from Atomic repository"
-	yum -q -y --enablerepo=atomic update php mysql
+	yum --enablerepo=atomic update php mysql
 
 }
 
