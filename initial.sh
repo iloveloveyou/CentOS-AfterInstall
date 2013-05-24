@@ -7,7 +7,7 @@ install_prerequisities() {
 	if [[ $REPLY =~ ^[Yy]$ ]]
 	then
 		yum groupremove "E-mail server" "Graphical Administration Tools" "Perl Support" "Network file system client" "Web Server" "PHP Support" "PostgreSQL Database server" "MySQL Database server"
-		yum remove epel* rpmforge* webmin* virtualmin* php* perl* mysql* postgre*
+		yum remove epel* rpmforge* webmin* virtualmin* php* perl* mysql* postgre* http*
 	fi
 	
 	yum install wget mlocate subversion perl at git man
