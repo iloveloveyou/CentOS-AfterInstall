@@ -288,11 +288,23 @@ ssh_settings() {
 	sed -i "s@#Port.*@Port ${PORT}@" /etc/ssh/sshd_config
 
 	echo -e "Open port ${PORT} in the firewall"
-	sed -i "/dport ssh/d" /etc/sysconfig/iptables
-	sed -i "s@dport 22@dport ${PORT}@" /etc/sysconfig/iptables
-
-	echo -e "Apply IPTables settings"
-	service iptables restart
+	if [ -f /etc/sysconfing/iptables ]
+	then
+		sed -i "/dport ssh/d" /etc/sysconfig/iptables
+		sed -i "s@dport 22@dport ${PORT}@" /etc/sysconfig/iptables
+		echo -e "Apply IPTables settings"
+		service iptables restart
+	else
+		echo -e "\n#######################################"
+		echo -e "#"
+		echo -e "# IPTables configuration file not found!"
+		echo -e "#"
+		echo -e "# Verify correct settings in Virtualmin!"
+		echo -e "#"
+		echo -e "# Check Option \"Linux Firewall\""
+		echo -e "#"
+		echo -e "#######################################"
+	fi
 
 #	echo -e "Disable password authentication forcing use of keys"
 #	sed -i "s@.*PasswordAuthentication yes.*@PasswordAuthentication no@" /etc/ssh/sshd_config
@@ -351,6 +363,7 @@ EOF
 	# Print connection information #
 	################################
 
+	IP_ADDR=$(ip a s eth0 | grep 'inet ' | cut -d/ -f1 | awk '{ print $2 }')
 	echo -e "\n#######################################"
 	echo -e "#"
 	echo -e "# To connect to system use following:"
@@ -365,8 +378,13 @@ EOF
 mysql_settings() {
 
 	echo -e "Use the newest configuration file"
-	mv /etc/my.cnf /etc/my.cnf.rpmold
-	mv /etc/my.cnf.rpmnew /etc/my.cnf
+	if [ -f /etc/my.cnf.rpmnew ]
+	then
+		mv /etc/my.cnf /etc/my.cnf.rpmold
+		mv /etc/my.cnf.rpmnew /etc/my.cnf
+	else
+		echo -e "Already using the latest my.cnf"
+	fi
 
 	echo -e "Bind MySQL to localhost only"
 	BINDLOCAL=$(grep -c bind-address /etc/my.cnf)
