@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 install_prerequisities() {
 
 	echo -e "\nBefore we install any prerequisities, this script will remove many rpm groups and packages to make the system \"cleaner\"."
@@ -13,6 +14,7 @@ install_prerequisities() {
 	yum install wget mlocate subversion perl at git man
 
 }
+
 
 set_repos() {
 
@@ -73,8 +75,9 @@ install_virtualmin() {
 	echo -e "#             IMPORTANT!!!"
 	echo -e "#"
 	echo -e "# Please navigate to following address"
-	echo -e "#  in your browser and perform initial"
-	echo -e "#   set up of Virtualmin GPL:"
+	echo -e "# in your browser and perform initial"
+	echo -e "# set up of Virtualmin GPL including"
+	echo -e "# set up of IPTables (Linux Firewall):"
 	echo -e "#"
 	echo -e "#   https://${HOSTNAME}:10000/"
 	echo -e "#"
@@ -450,11 +453,12 @@ php_settings() {
 
 }
 
+
 print_usage() {
 
 cat << EOF
 
-Usage: $0 [-IRVUOSMAP]
+Usage: $0 [-IRVUOSMAPG]
 
 This script performs initial setting of the system and common services
 after fresh install of CentOS minimal Linux distribution.
@@ -470,10 +474,19 @@ OPTIONS:
   -M   Tweak MySQL server settings
   -A   Tweak Apache server settings
   -P   Tweak PHP settings
+  -G   Optimize PNG images
   
 EOF
 
 exit 1
+
+}
+
+
+optimize_pngs() {
+
+	find /home/*/public_html -name "*.png" -type f | xargs optipng -o7
+	find /home/*/public_html -name "*.PNG" -type f | xargs optipng -o7
 
 }
 
@@ -483,7 +496,7 @@ if [ $# -eq 0 ]
 	then print_usage
 fi
 
-OPTIONS="IRVUOSMAP"
+OPTIONS="IRVUOSMAPG"
 
 while getopts ${OPTIONS} optname
 do
@@ -523,6 +536,10 @@ do
 		"P")
 			echo -e "\nPHP settings"
 			php_settings
+			;;
+		"G")
+			echo -e "\nOptimize PNG images"
+			optimize_images
 			;;
 		"?")
 			print_usage
