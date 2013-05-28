@@ -483,10 +483,9 @@ exit 1
 }
 
 
-optimize_pngs() {
+optimize_images() {
 
-	find /home/*/public_html -name "*.png" -type f | xargs optipng -o7
-	find /home/*/public_html -name "*.PNG" -type f | xargs optipng -o7
+	find /home/*/public_html \( -name "*.png" -o -name "*.PNG" \) -type f | xargs optipng -o7
 
 }
 
@@ -538,7 +537,7 @@ do
 			php_settings
 			;;
 		"G")
-			echo -e "\nOptimize PNG images"
+			echo -e "\nOptimize images"
 			optimize_images
 			;;
 		"?")
