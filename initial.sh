@@ -111,6 +111,9 @@ update_install() {
 	echo -e "Update PHP and MySQL from Atomic repository"
 	yum --enablerepo=atomic update php mysql
 
+	echo -e "MySQL upgrade"
+	mysql_upgrade -u root -p
+
 }
 
 
