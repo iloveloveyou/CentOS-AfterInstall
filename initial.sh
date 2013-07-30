@@ -311,28 +311,28 @@ ssh_settings() {
 	echo -e "Disable Protocol 1"
 	sed -i "s@.*Protocol.*@Protocol 2@" /etc/ssh/sshd_config
 
-	echo -e "Use a Non-Standard Port"
-	PORT=$(shuf -i 40000-65000 -n 1)
-	sed -i "s@#Port.*@Port ${PORT}@" /etc/ssh/sshd_config
+#	echo -e "Use a Non-Standard Port"
+#	PORT=$(shuf -i 40000-65000 -n 1)
+#	sed -i "s@#Port.*@Port ${PORT}@" /etc/ssh/sshd_config
 
-	echo -e "Open port ${PORT} in the firewall"
-	if [ -f /etc/sysconfing/iptables ]
-	then
-		sed -i "/dport ssh/d" /etc/sysconfig/iptables
-		sed -i "s@dport 22@dport ${PORT}@" /etc/sysconfig/iptables
-		echo -e "Apply IPTables settings"
-		service iptables restart
-	else
-		echo -e "\n#######################################"
-		echo -e "#"
-		echo -e "# IPTables configuration file not found!"
-		echo -e "#"
-		echo -e "# Verify correct settings in Virtualmin!"
-		echo -e "#"
-		echo -e "# Check Option \"Linux Firewall\""
-		echo -e "#"
-		echo -e "#######################################"
-	fi
+#	echo -e "Open port ${PORT} in the firewall"
+#	if [ -f /etc/sysconfing/iptables ]
+#	then
+#		sed -i "/dport ssh/d" /etc/sysconfig/iptables
+#		sed -i "s@dport 22@dport ${PORT}@" /etc/sysconfig/iptables
+#		echo -e "Apply IPTables settings"
+#		service iptables restart
+#	else
+#		echo -e "\n#######################################"
+#		echo -e "#"
+#		echo -e "# IPTables configuration file not found!"
+#		echo -e "#"
+#		echo -e "# Verify correct settings in Virtualmin!"
+#		echo -e "#"
+#		echo -e "# Check Option \"Linux Firewall\""
+#		echo -e "#"
+#		echo -e "#######################################"
+#	fi
 
 #	echo -e "Disable password authentication forcing use of keys"
 #	sed -i "s@.*PasswordAuthentication yes.*@PasswordAuthentication no@" /etc/ssh/sshd_config
@@ -383,6 +383,9 @@ EOF
 
 	echo -e "Restrict max number of retries"
 	sed -i "s@^#MaxAuthTries.*@MaxAuthTries 3@" /etc/ssh/sshd_config
+
+	echo -e "Disable UseDNS"
+	sed -i "s@^#UseDNS.*@UseDNS no@" /etc/ssh/sshd_config
 
 	echo -e "Restart sshd to apply changes\n"
 	service sshd restart
