@@ -146,6 +146,9 @@ system_settings() {
 	echo -e "Use sha512 instead of md5 for password protection"
 	authconfig --passalgo=sha512 --update
 
+	echo -e "Use timestamps within History"
+	echo 'export HISTTIMEFORMAT="%d/%m/%y %T "' > /etc/profile.d/history.sh
+
 	########################
 	# Restrict cron and at #
 	########################
