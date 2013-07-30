@@ -270,6 +270,25 @@ readonly HISTFILE
 EOF
 	chmod +x /etc/profile.d/idle-users.sh
 
+	############################################
+	# Install ConfigServer Security & Firewall #
+	############################################
+
+	echo -e "Installation of ConfigServer Security & Firewall"
+	wget http://configserver.com/free/csf.tgz -O - | tar xzf -
+	cd csf && ./install.sh && cd .. && rm -rf csf csf.tgz
+
+	echo -e "\n#########################################"
+	echo -e "#"
+	echo -e "#             IMPORTANT!!!"
+	echo -e "#"
+	echo -e "# Please navigate to Virtualmin GPL UI,"
+	echo -e "# install CSF Webmin module, enable it,"
+	echo -e "# disable 'testing mode' and set the"
+	echo -e "# Firewall level (e.g. 'low')."
+	echo -e "#"
+	echo -e "#########################################"
+
 }
 
 
