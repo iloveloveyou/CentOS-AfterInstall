@@ -93,7 +93,7 @@ install_virtualmin() {
 update_install() {
 
 	echo -e "Install common packages"
-	yum --enablerepo=atomic,epel,rpmforge install php-mcrypt php-pecl-imagick php-pecl-apc php-pecl-memcache phpMyAdmin memcached htop mytop optipng
+	yum --enablerepo=atomic,epel,rpmforge install php-mcrypt php-pecl-apc php-pecl-memcache phpMyAdmin memcached htop mytop optipng
 
 	echo -e "Enable memcached to start on boot"
 	chkconfig memcached on
