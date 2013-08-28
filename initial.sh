@@ -97,7 +97,7 @@ update_install() {
 
 	echo -e "Adjust Memcached setting and enable start on boot"
 	sed -i "s@CACHESIZE.*@CACHESIZE=\"1024\"@g" /etc/sysconfig/memcached
-	sed -i "s@OPTIONS.*@OPTIONS\"-l localhost\"@g" /etc/sysconfig/memcached
+	sed -i "s@OPTIONS.*@OPTIONS=\"-l localhost\"@g" /etc/sysconfig/memcached
 	chkconfig memcached on
 	service memcached restart
 	
