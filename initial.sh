@@ -473,8 +473,8 @@ php_settings() {
 	TIMEZONE=$(cat /etc/sysconfig/clock | cut -d\" -f2)
 	sed -i "s@.*date.timezone =.*@date.timezone = ${TIMEZONE}@" /etc/php.ini
 
-	echo -e "Set correct cookie domain"
-	sed -i "s@.*session.cookie_domain =.*@session.cookie_domain = ${HOSTNAME}@" /etc/php.ini
+	#echo -e "Set correct cookie domain"
+	#sed -i "s@.*session.cookie_domain =.*@session.cookie_domain = ${HOSTNAME}@" /etc/php.ini
 
 	echo -e "Apply new settings"
 	service httpd restart
