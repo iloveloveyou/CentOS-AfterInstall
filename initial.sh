@@ -20,20 +20,20 @@ set_repos() {
 
         if [ ! -f /etc/yum.repos.d/rpmforge.repo ]
                 then echo -e "RPMForge"
-                yum -q -y localinstall --nogpgcheck http://packages.sw.be/rpmforge-release/rpmforge-release-0.5.3-1.el6.rf.x86_64.rpm
+                yum -q localinstall --nogpgcheck http://packages.sw.be/rpmforge-release/rpmforge-release-0.5.3-1.el6.rf.x86_64.rpm
                 else echo -e "RPMForge repository already set"
         fi
 
         if [ ! -f /etc/yum.repos.d/epel.repo ]
                 then echo -e "EPEL"
-                yum -q -y localinstall --nogpgcheck http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm
+                yum -q localinstall --nogpgcheck http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm
                 else echo -e "EPEL repository already set"
         fi
 
         if [ ! -f /etc/yum.repos.d/rpmfusion-free-updates.repo ]
                 then echo -e "RPMFusion"
-                yum -q -y localinstall --nogpgcheck http://download1.rpmfusion.org/free/el/updates/6/i386/rpmfusion-free-release-6-1.noarch.rpm
-                yum -q -y localinstall --nogpgcheck http://download1.rpmfusion.org/nonfree/el/updates/6/i386/rpmfusion-nonfree-release-6-1.noarch.rpm
+                yum -q localinstall --nogpgcheck http://download1.rpmfusion.org/free/el/updates/6/i386/rpmfusion-free-release-6-1.noarch.rpm
+                yum -q localinstall --nogpgcheck http://download1.rpmfusion.org/nonfree/el/updates/6/i386/rpmfusion-nonfree-release-6-1.noarch.rpm
                 else echo -e "RPMFusion repository already set"
         fi
 
