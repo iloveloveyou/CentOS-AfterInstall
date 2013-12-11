@@ -11,7 +11,7 @@ install_prerequisities() {
 		yum remove epel* rpmforge* webmin* virtualmin* php* perl* mysql* postgre* http*
 	fi
 	
-	yum install wget mlocate subversion perl at git man
+	yum install wget mlocate subversion perl at git man yum-utils
 
 }
 
@@ -76,8 +76,7 @@ install_virtualmin() {
 	echo -e "#"
 	echo -e "# Please navigate to following address"
 	echo -e "# in your browser and perform initial"
-	echo -e "# set up of Virtualmin GPL including"
-	echo -e "# set up of IPTables (Linux Firewall):"
+	echo -e "# set up of Virtualmin GPL:"
 	echo -e "#"
 	echo -e "#   https://${HOSTNAME}:10000/"
 	echo -e "#"
@@ -314,9 +313,9 @@ ssh_settings() {
 	echo -e "Disable Protocol 1"
 	sed -i "s@.*Protocol.*@Protocol 2@" /etc/ssh/sshd_config
 
-#	echo -e "Use a Non-Standard Port"
-#	PORT=$(shuf -i 40000-65000 -n 1)
-#	sed -i "s@#Port.*@Port ${PORT}@" /etc/ssh/sshd_config
+	echo -e "Use a Non-Standard Port"
+	PORT=$(shuf -i 40000-65000 -n 1)
+	sed -i "s@#Port.*@Port ${PORT}@" /etc/ssh/sshd_config
 
 #	echo -e "Open port ${PORT} in the firewall"
 #	if [ -f /etc/sysconfing/iptables ]
@@ -403,6 +402,9 @@ EOF
 	echo -e "# To connect to system use following:"
 	echo -e "#"
 	echo -e "#   ssh -p ${PORT} root@${IP_ADDR}"
+	echo -e "#"
+	echo -e "# Make sure you 'ssh-copy-id' to the server"
+	echo -e "# and disable PasswordAuthentication. "
 	echo -e "#"
 	echo -e "#######################################"
 
