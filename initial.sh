@@ -30,24 +30,16 @@ set_repos() {
                 else echo -e "EPEL repository already set"
         fi
 
-        if [ ! -f /etc/yum.repos.d/rpmfusion-free-updates.repo ]
-                then echo -e "RPMFusion"
-                yum -q localinstall --nogpgcheck http://download1.rpmfusion.org/free/el/updates/6/i386/rpmfusion-free-release-6-1.noarch.rpm
-                yum -q localinstall --nogpgcheck http://download1.rpmfusion.org/nonfree/el/updates/6/i386/rpmfusion-nonfree-release-6-1.noarch.rpm
-                else echo -e "RPMFusion repository already set"
-        fi
-
-        if [ ! -f /etc/yum.repos.d/atomic.repo ]
-                then echo -e "Atomic"
-                wget -q -O - http://www.atomicorp.com/installers/atomic | sh
-                else echo -e "Atomic repository already set"
+        if [ ! -f /etc/yum.repos.d/remi.repo ]
+                then echo -e "Remi"
+                yum -q localinstall --nogpgcheck http://rpms.famillecollet.com/enterprise/remi-release-6.rpm
+                else echo -e "Remi repository already set"
         fi
         
         echo -e "Disabling added repositories"
-	sed -i "s@^enabled.*@enabled=0@" /etc/yum.repos.d/atomic*.repo
 	sed -i "s@^enabled.*@enabled=0@" /etc/yum.repos.d/epel*.repo
 	sed -i "s@^enabled.*@enabled=0@" /etc/yum.repos.d/rpmforge*.repo
-	sed -i "s@^enabled.*@enabled=0@" /etc/yum.repos.d/rpmfusion*.repo
+	sed -i "s@^enabled.*@enabled=0@" /etc/yum.repos.d/remi*.repo
 
 	echo -e "Done."
 
