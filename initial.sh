@@ -52,10 +52,10 @@ install_virtualmin() {
 	sh /tmp/install.sh -f
 	rm -f /tmp/install.sh
 	
-	echo -e "Installing Stress-Free Webmin theme"
-	wget -q -O - https://webmin-theme-stressfree.googlecode.com/files/theme-stressfree-2.10.tar.gz | tar xzf - -C /usr/libexec/webmin
-	echo "theme-stressfree" > /usr/libexec/webmin/defaulttheme
-	sed -i "s@^theme.*@theme=theme-stressfree@" /etc/webmin/config
+	#echo -e "Installing Stress-Free Webmin theme"
+	#wget -q -O - https://webmin-theme-stressfree.googlecode.com/files/theme-stressfree-2.10.tar.gz | tar xzf - -C /usr/libexec/webmin
+	#echo "theme-stressfree" > /usr/libexec/webmin/defaulttheme
+	#sed -i "s@^theme.*@theme=theme-stressfree@" /etc/webmin/config
 
 	########################################################
 	# Instruct to perform initial set up of Virtualmin GPL #
@@ -84,26 +84,26 @@ install_virtualmin() {
 update_install() {
 
 	echo -e "Install common packages"
-	yum --enablerepo=atomic,epel,rpmforge install php-mcrypt php-pecl-apc php-pecl-memcache phpMyAdmin memcached htop mytop optipng logwatch
+	yum --enablerepo=epel,remi,rpmforge install php-mcrypt php-pecl-apc php-pecl-memcache memcached htop mytop optipng logwatch
 
 	echo -e "Adjust Memcached setting and enable start on boot"
-	sed -i "s@CACHESIZE.*@CACHESIZE=\"1024\"@g" /etc/sysconfig/memcached
+	sed -i "s@CACHESIZE.*@CACHESIZE=\"512\"@g" /etc/sysconfig/memcached
 	sed -i "s@OPTIONS.*@OPTIONS=\"-l localhost\"@g" /etc/sysconfig/memcached
 	chkconfig memcached on
 	service memcached restart
 	
-	if [ ! -f /etc/yum.repos.d/mod-pagespeed.repo ]
-		then echo -e "\nInstall of mod_pagespeed"
-		rpm --import https://dl-ssl.google.com/linux/linux_signing_key.pub
-		yum -q -y localinstall https://dl-ssl.google.com/dl/linux/direct/mod-pagespeed-stable_current_$(uname -i).rpm
-		else echo -e "\nmod_pagespeed repository already set"
-	fi
+	#if [ ! -f /etc/yum.repos.d/mod-pagespeed.repo ]
+	#	then echo -e "\nInstall of mod_pagespeed"
+	#	rpm --import https://dl-ssl.google.com/linux/linux_signing_key.pub
+	#	yum -q -y localinstall https://dl-ssl.google.com/dl/linux/direct/mod-pagespeed-stable_current_$(uname -i).rpm
+	#	else echo -e "\nmod_pagespeed repository already set"
+	#fi
 
 	echo -e "Updating system"
 	yum update
 
 	echo -e "Update PHP and MySQL from Atomic repository"
-	yum --enablerepo=atomic update php mysql
+	yum --enablerepo=epel,remi,rpmforge update php mysql
 
 	echo -e "MySQL upgrade"
 	mysql_upgrade -u root -p
